@@ -15,7 +15,7 @@
             android:id="@+id/dBTextView"
             android:layout_width="107dp"
             android:layout_height="wrap_content"
-            android:layout_weight="0.25"
+            android:layout_weight="0.24"
             android:gravity="right"
             android:text="0"
             android:textAppearance="?android:attr/textAppearanceLarge"
@@ -45,7 +45,7 @@
             android:id="@+id/textView4"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="0.25"
+            android:layout_weight="0.11"
             android:text="dB"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:textSize="50dp"
@@ -66,7 +66,8 @@
     <LinearLayout
         android:id="@+id/linearLayout3"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp">
 
         <TextView
             android:id="@+id/gain_error_text"
@@ -88,13 +89,23 @@
             android:textSize="20dp" />
 
         <Button
-            android:id="@+id/settingsButton"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_marginRight="10dp"
+            android:id="@+id/infobutton"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/info_icon"
+            android:text=""
             android:layout_marginTop="10dp"
+            android:layout_marginRight="15dp" />
+
+        <Button
+            android:id="@+id/settingsButton"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:background="@drawable/settings"
-            android:text="" />
+            android:text=""
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="15dp"
+            android:layout_marginLeft="10dp" />
 
     </LinearLayout>
 
@@ -111,34 +122,45 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0.10"
-            android:text="@string/minus_5_db" />
+            android:text="@string/minus_5_db"
+            android:background="#cecffb"
+            android:layout_margin="2dp" />
 
         <Button
             android:id="@+id/minus_1_db_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0.10"
-            android:text="@string/minus_1_db" />
+            android:text="@string/minus_1_db"
+            android:background="#dfe0fe"
+            android:layout_margin="2dp" />
 
         <Button
             android:id="@+id/plus_1_db_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0.10"
-            android:text="@string/plus_1_db" />
+            android:text="@string/plus_1_db"
+            android:background="#dfe0fe"
+            android:layout_margin="2dp" />
 
         <Button
             android:id="@+id/plus_5_db_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0.10"
-            android:text="@string/plus_5_db" />
+            android:text="@string/plus_5_db"
+            android:background="#cecffb"
+            android:layout_margin="2dp" />
     </LinearLayout>
 
 
     <com.jjoe64.graphview.GraphView
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:id="@+id/graph" />
+        android:id="@+id/graph"
+        android:layout_marginTop="20dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp" />
 
 </LinearLayout>

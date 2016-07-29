@@ -5,12 +5,12 @@ package com.kaushal.soundlevelmeter;
  */
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.SharedPreferences;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -20,6 +20,7 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.helper.StaticLabelsFormatter;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
@@ -33,7 +34,7 @@ public class MainActivity extends Activity implements AudioInputListener {
     TextView fractionDb;
     private TextView gainDb;
     private LineGraphSeries<DataPoint> graphData;
-    private double graphLastXValue = 5d;
+    private double graphLastXValue = -1d;
     double gain = 2500.0 / Math.pow(10.0, 90.0 / 20.0);
     double differenceFromNominal = 0.0;
     double smoothedRms;
@@ -44,51 +45,69 @@ public class MainActivity extends Activity implements AudioInputListener {
     private volatile int drawingCollided;
     GraphView graph;
     Dialog settingsDialog;
+    int graphXMin = 0;
+    int graphXMax = 250;
+    int graphYMin = 0;
+    int graphYMax = 120;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         micInput = new AudioInput(this);
         setContentView(R.layout.activity_main);
+
         primaryDb = (TextView) findViewById(R.id.dBTextView);
         fractionDb = (TextView) findViewById(R.id.dBFractionTextView);
         gainDb = (TextView) findViewById(R.id.gain);
         graph = (GraphView) findViewById(R.id.graph);
+        Button minus5dbButton = (Button) findViewById(R.id.minus_5_db_button);
+        Button minus1dbButton = (Button) findViewById(R.id.minus_1_db_button);
+        Button plus1dbButton = (Button) findViewById(R.id.plus_1_db_button);
+        Button plus5dbButton = (Button) findViewById(R.id.plus_5_db_button);
+        final ToggleButton onOffButton = (ToggleButton) findViewById(R.id.on_off_toggle_button);
+        final Button settingsButton = (Button) findViewById(R.id.settingsButton);
+        final Button infoButton = (Button) findViewById(R.id.infobutton);
+
+
         graphData = new LineGraphSeries<DataPoint>();
         graph.getViewport().setXAxisBoundsManual(true);
-        graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(20);
-        final ToggleButton onOffButton = (ToggleButton) findViewById(R.id.on_off_toggle_button);
-        ToggleButton.OnClickListener tbListener =
-                new ToggleButton.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (onOffButton.isChecked()) {
-                            readPreferences();
-                            micInput.setSampleRate(sampleRate);
-                            micInput.setAudioSource(audioSource);
-                            micInput.start();
-                            graph.addSeries(graphData);
-                        } else {
-                            micInput.stop();
-                        }
-                    }
-                };
-        onOffButton.setOnClickListener(tbListener);
-        Button minus5dbButton = (Button) findViewById(R.id.minus_5_db_button);
+        graph.getViewport().setMinX(graphXMin);
+        graph.getViewport().setMaxX(graphXMax);
+        graph.getViewport().setYAxisBoundsManual(true);
+        graph.getViewport().setMinY(graphYMin);
+        graph.getViewport().setMaxY(graphYMax);
+        graph.getViewport().setScrollable(true);
+        StaticLabelsFormatter staticLabelsFormatter = new StaticLabelsFormatter(graph);
+        staticLabelsFormatter.setVerticalLabels(new String[] {"0", "30", "60", "90", "120"});
+        graph.getGridLabelRenderer().setLabelFormatter(staticLabelsFormatter);
+        graph.setClickable(true);
+
+        ToggleButton.OnClickListener toggleButtonListener = new ToggleButton.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (onOffButton.isChecked()) {
+                    startListening();
+                } else {
+                    micInput.stop();
+                }
+            }
+        };
+        onOffButton.setOnClickListener(toggleButtonListener);
+
         DbClickListener minus5dBButtonListener = new DbClickListener(-5.0);
-        minus5dbButton.setOnClickListener(minus5dBButtonListener);
-        Button minus1dbButton = (Button) findViewById(R.id.minus_1_db_button);
         DbClickListener minus1dBButtonListener = new DbClickListener(-1.0);
-        minus1dbButton.setOnClickListener(minus1dBButtonListener);
-        Button plus1dbButton = (Button) findViewById(R.id.plus_1_db_button);
         DbClickListener plus1dBButtonListener = new DbClickListener(1.0);
-        plus1dbButton.setOnClickListener(plus1dBButtonListener);
-        Button plus5dbButton = (Button) findViewById(R.id.plus_5_db_button);
         DbClickListener plus5dBButtonListener = new DbClickListener(5.0);
+
+
+        minus5dbButton.setOnClickListener(minus5dBButtonListener);
+        minus1dbButton.setOnClickListener(minus1dBButtonListener);
+        plus1dbButton.setOnClickListener(plus1dBButtonListener);
         plus5dbButton.setOnClickListener(plus5dBButtonListener);
-        final Button settingsButton = (Button) findViewById(R.id.settingsButton);
-        Button.OnClickListener settingsBtnListener = new Button.OnClickListener() {
+
+
+        Button.OnClickListener settingsButtonListener = new Button.OnClickListener() {
             public void onClick(View v) {
                 onOffButton.setChecked(false);
                 MainActivity.this.micInput.stop();
@@ -96,13 +115,33 @@ public class MainActivity extends Activity implements AudioInputListener {
             }
 
         };
-        settingsButton.setOnClickListener(settingsBtnListener);
+        settingsButton.setOnClickListener(settingsButtonListener);
+
+        Button.OnClickListener infoButtonListener = new Button.OnClickListener() {
+            public void onClick(View v) {
+                final AlertDialog.Builder infoDialog = new AlertDialog.Builder(MainActivity.this);
+                infoDialog.setTitle("Help:");
+                infoDialog.setMessage(R.string.info_message);
+                infoDialog.setPositiveButton("OK",null);
+                infoDialog.show();
+
+            }
+
+        };
+        infoButton.setOnClickListener(infoButtonListener);
+    }
+
+    private void startListening() {
+        readPreferences();
+        micInput.setSampleRate(sampleRate);
+        micInput.setAudioSource(audioSource);
+        micInput.start();
+        graph.addSeries(graphData);
     }
 
     private void showSettingsDialog() {
         settingsDialog = new Dialog(MainActivity.this);
         settingsDialog.setContentView(R.layout.sample_settings);
-        settingsDialog.setTitle("Settings:");
         Spinner spinner = (Spinner) settingsDialog.findViewById(R.id.spinnerSampleRate);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
                 MainActivity.this, R.array.sample_rate_array, android.R.layout.simple_spinner_item);
@@ -130,11 +169,9 @@ public class MainActivity extends Activity implements AudioInputListener {
 
     private class DbClickListener implements Button.OnClickListener {
         private double gainIncrement;
-
         public DbClickListener(double gainIncrement) {
             this.gainIncrement = gainIncrement;
         }
-
         @Override
         public void onClick(View v) {
             MainActivity.this.gain *= Math.pow(10, gainIncrement / 20.0);
@@ -142,12 +179,6 @@ public class MainActivity extends Activity implements AudioInputListener {
             DecimalFormat df = new DecimalFormat("##.# dB");
             gainDb.setText(df.format(differenceFromNominal));
         }
-    }
-
-    private void readPreferences() {
-        SharedPreferences preferences = getSharedPreferences("SoundLevelMeter", MODE_PRIVATE);
-        sampleRate = preferences.getInt("SampleRate", 8000);
-        audioSource = preferences.getInt("AudioSource", MediaRecorder.AudioSource.VOICE_RECOGNITION);
     }
 
     @Override
@@ -159,7 +190,7 @@ public class MainActivity extends Activity implements AudioInputListener {
                 @Override
                 public void run() {
                     graphLastXValue += 1d;
-                    graphData.appendData(new DataPoint(graphLastXValue, 20 + rmsdB), true, 40);
+                    graphData.appendData(new DataPoint(graphLastXValue, 20 + rmsdB), true, graphXMax);
                     DecimalFormat df = new DecimalFormat("##");
                     primaryDb.setText(df.format(20 + rmsdB));
                     int one_decimal = (int) (Math.round(Math.abs(rmsdB * 10))) % 10;
@@ -168,10 +199,6 @@ public class MainActivity extends Activity implements AudioInputListener {
                 }
             };
             handler.postDelayed(runTimer, 100);
-        } else {
-            drawingCollided++;
-            Log.v("LevelMeterActivity", "Level bar update collision, i.e. update took longer " +
-                    "than 20ms. Collision count" + Double.toString(drawingCollided));
         }
     }
 
@@ -196,15 +223,21 @@ public class MainActivity extends Activity implements AudioInputListener {
             MainActivity.this.sampleRate =
                     Integer.parseInt(parent.getItemAtPosition(pos).toString());
         }
+
         @Override
         public void onNothingSelected(AdapterView parent) {
             // Do nothing.
         }
     }
 
+    private void readPreferences() {
+        SharedPreferences preferences = getSharedPreferences("SoundLevelMeter", MODE_PRIVATE);
+        sampleRate = preferences.getInt("SampleRate", 8000);
+        audioSource = preferences.getInt("AudioSource", MediaRecorder.AudioSource.VOICE_RECOGNITION);
+    }
+
     private void setPreferences() {
-        SharedPreferences preferences = getSharedPreferences("SoundLevelMeter",
-                MODE_PRIVATE);
+        SharedPreferences preferences = getSharedPreferences("SoundLevelMeter", MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("SampleRate", sampleRate);
         editor.apply();
