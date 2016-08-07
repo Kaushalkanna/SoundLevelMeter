@@ -55,7 +55,7 @@ public class MainActivity extends Activity implements AudioInputListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         micInput = new AudioInput(this);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.db_meter_main);
 
         primaryDb = (TextView) findViewById(R.id.dBTextView);
         fractionDb = (TextView) findViewById(R.id.dBFractionTextView);
@@ -141,7 +141,7 @@ public class MainActivity extends Activity implements AudioInputListener {
 
     private void showSettingsDialog() {
         settingsDialog = new Dialog(MainActivity.this);
-        settingsDialog.setContentView(R.layout.sample_settings);
+        settingsDialog.setContentView(R.layout.db_sample_settings);
         Spinner spinner = (Spinner) settingsDialog.findViewById(R.id.spinnerSampleRate);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
                 MainActivity.this, R.array.sample_rate_array, android.R.layout.simple_spinner_item);
