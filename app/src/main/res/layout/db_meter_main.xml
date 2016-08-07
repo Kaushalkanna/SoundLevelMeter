@@ -58,7 +58,7 @@
         android:id="@+id/on_off_toggle_button"
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:background="@drawable/check"
+        android:background="@drawable/db_toggle"
         android:text=""
         android:textOff=""
         android:textOn="" />
