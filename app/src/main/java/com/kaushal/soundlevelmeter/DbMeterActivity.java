@@ -26,7 +26,7 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 
 import java.text.DecimalFormat;
 
-public class MainActivity extends Activity implements AudioInputListener {
+public class DbMeterActivity extends Activity implements AudioInputListener {
     private final Handler handler = new Handler();
     Runnable runTimer;
     AudioInput micInput;
@@ -110,7 +110,7 @@ public class MainActivity extends Activity implements AudioInputListener {
         Button.OnClickListener settingsButtonListener = new Button.OnClickListener() {
             public void onClick(View v) {
                 onOffButton.setChecked(false);
-                MainActivity.this.micInput.stop();
+                DbMeterActivity.this.micInput.stop();
                 showSettingsDialog();
             }
 
@@ -119,7 +119,7 @@ public class MainActivity extends Activity implements AudioInputListener {
 
         Button.OnClickListener infoButtonListener = new Button.OnClickListener() {
             public void onClick(View v) {
-                final AlertDialog.Builder infoDialog = new AlertDialog.Builder(MainActivity.this);
+                final AlertDialog.Builder infoDialog = new AlertDialog.Builder(DbMeterActivity.this);
                 infoDialog.setTitle("Help:");
                 infoDialog.setMessage(R.string.info_message);
                 infoDialog.setPositiveButton("OK",null);
@@ -140,11 +140,11 @@ public class MainActivity extends Activity implements AudioInputListener {
     }
 
     private void showSettingsDialog() {
-        settingsDialog = new Dialog(MainActivity.this);
+        settingsDialog = new Dialog(DbMeterActivity.this);
         settingsDialog.setContentView(R.layout.db_sample_settings);
         Spinner spinner = (Spinner) settingsDialog.findViewById(R.id.spinnerSampleRate);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-                MainActivity.this, R.array.sample_rate_array, android.R.layout.simple_spinner_item);
+                DbMeterActivity.this, R.array.sample_rate_array, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(new MyOnItemSelectedListener());
@@ -158,7 +158,7 @@ public class MainActivity extends Activity implements AudioInputListener {
                 new Button.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        MainActivity.this.setPreferences();
+                        DbMeterActivity.this.setPreferences();
                         settingsDialog.dismiss();
 
                     }
@@ -174,7 +174,7 @@ public class MainActivity extends Activity implements AudioInputListener {
         }
         @Override
         public void onClick(View v) {
-            MainActivity.this.gain *= Math.pow(10, gainIncrement / 20.0);
+            DbMeterActivity.this.gain *= Math.pow(10, gainIncrement / 20.0);
             differenceFromNominal -= gainIncrement;
             DecimalFormat df = new DecimalFormat("##.# dB");
             gainDb.setText(df.format(differenceFromNominal));
@@ -220,7 +220,7 @@ public class MainActivity extends Activity implements AudioInputListener {
     public class MyOnItemSelectedListener implements AdapterView.OnItemSelectedListener {
         @Override
         public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-            MainActivity.this.sampleRate =
+            DbMeterActivity.this.sampleRate =
                     Integer.parseInt(parent.getItemAtPosition(pos).toString());
         }
 
